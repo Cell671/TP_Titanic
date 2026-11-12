@@ -200,3 +200,20 @@ Les distributions se chevauchent : l'âge seul ne permet donc pas
 de distinguer clairement les survivants des non-survivants.
 Cette analyse porte uniquement sur les passagers dont l'âge est connu.
 Les valeurs manquantes peuvent limiter la représentativité des résultats.
+
+
+# 6. Utilisation du package TitanicPackage
+
+```{r utilisation-package}
+library(TitanicPackage)
+
+taux_survie(TitanicSurvival, "sex")
+taux_survie(TitanicSurvival, "passengerClass")
+```
+
+Le taux de survie est de 72,7 % chez les femmes et de 19,1 %
+chez les hommes. Il est de 61,9 % en première classe,
+43,0 % en deuxième classe et 25,5 % en troisième classe.
+
+Ces comparaisons sont descriptives : elles ne permettent pas
+d'isoler l'effet propre du sexe, de la classe ou de l'âge.
