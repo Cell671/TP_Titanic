@@ -1,0 +1,202 @@
+---
+title: "Analyse du Titanic"
+author: "Zakaria QICHOU"
+output: html_document
+---
+
+# 1. Présentation des données
+
+Le jeu de données TitanicSurvival, disponible dans le package carData, décrit les passagers du Titanic selon leur survie, leur sexe, leur âge et leur classe.
+
+```{r chargement}
+library(carData)
+data("TitanicSurvival", package = "carData")
+head(TitanicSurvival)
+```
+
+## Variables étudiées
+
+- survived : survie du passager (yes ou no).
+- sex : sexe du passager (female ou male).
+- age : âge en années.
+- passengerClass : classe du passager (1st, 2nd ou 3rd).
+
+## Dimensions et structure
+
+```{r structure}
+dim(TitanicSurvival)
+str(TitanicSurvival)
+```
+
+## Valeurs manquantes
+
+```{r valeurs-manquantes}
+colSums(is.na(TitanicSurvival))
+```
+
+
+# 2. Statistiques descriptives
+
+Le jeu de données comprend 1 309 passagers. L'âge est manquant
+pour 263 passagers, soit 20,1 %. Les calculs sur l'âge utilisent
+les 1 046 valeurs renseignées.
+
+## Effectifs
+
+```{r effectifs}
+table(TitanicSurvival$survived)
+table(TitanicSurvival$sex)
+table(TitanicSurvival$passengerClass)
+```
+
+## Pourcentages de survie
+
+```{r proportions-survie}
+round(100 * prop.table(table(TitanicSurvival$survived)), 1)
+```
+
+## Statistiques sur l'âge
+
+```{r statistiques-age}
+summary(TitanicSurvival$age)
+sd(TitanicSurvival$age, na.rm = TRUE)
+```
+
+# 3. Survie selon le sexe
+
+```{r graphique-sexe}
+library(ggplot2)
+
+ggplot(TitanicSurvival, aes(x = sex, fill = survived)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = function(x) paste0(x * 100, "%")) +
+  scale_x_discrete(labels = c(female = "Femmes", male = "Hommes")) +
+  scale_fill_manual(
+    values = c(no = "#E07A5F", yes = "#3D9970"),
+    labels = c(no = "Non-survivants", yes = "Survivants")
+  ) +
+  labs(
+    title = "Répartition de la survie selon le sexe",
+    x = "Sexe",
+    y = "Pourcentage dans chaque groupe",
+    fill = "Survie"
+  ) +
+  theme_minimal()
+```
+
+## Taux de survie selon le sexe
+
+```{r taux-sexe}
+round(
+  100 * prop.table(
+    table(TitanicSurvival$sex, TitanicSurvival$survived),
+    margin = 1
+  ),
+  1
+)
+```
+
+## Interprétation
+
+La proportion de survivants est plus élevée chez les femmes que chez
+les hommes. Les pourcentages sont calculés au sein de chaque sexe,
+ce qui permet de comparer les groupes malgré leurs effectifs différents.
+Cette comparaison décrit une association entre le sexe et la survie,
+sans tenir compte de l'âge ni de la classe des passagers.
+
+
+# 4. Survie selon la classe
+
+```{r graphique-classe}
+ggplot(TitanicSurvival, aes(x = passengerClass, fill = survived)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = function(x) paste0(x * 100, "%")) +
+  scale_x_discrete(
+    labels = c("1st" = "1re classe",
+               "2nd" = "2e classe",
+               "3rd" = "3e classe")
+  ) +
+  scale_fill_manual(
+    values = c(no = "#E07A5F", yes = "#3D9970"),
+    labels = c(no = "Non-survivants", yes = "Survivants")
+  ) +
+  labs(
+    title = "Répartition de la survie selon la classe",
+    x = "Classe des passagers",
+    y = "Pourcentage dans chaque classe",
+    fill = "Survie"
+  ) +
+  theme_minimal()
+```
+
+## Pourcentages de survie selon la classe
+
+```{r taux-classe}
+round(
+  100 * prop.table(
+    table(TitanicSurvival$passengerClass, TitanicSurvival$survived),
+    margin = 1
+  ),
+  1
+)
+```
+
+## Interprétation
+
+La proportion de survivants est la plus élevée en première classe,
+intermédiaire en deuxième classe et la plus faible en troisième classe.
+Les pourcentages sont calculés au sein de chaque classe.
+Cette comparaison décrit une association entre la classe et la survie,
+sans tenir compte des différences de sexe et d'âge entre les classes.
+
+
+# 5. Âge selon la survie
+
+Les 263 passagers dont l'âge est manquant sont exclus de cette analyse.
+
+```{r graphique-age}
+donnees_age <- subset(TitanicSurvival, !is.na(age))
+
+ggplot(donnees_age, aes(x = survived, y = age, fill = survived)) +
+  geom_boxplot() +
+  scale_x_discrete(
+    labels = c(no = "Non-survivants", yes = "Survivants")
+  ) +
+  scale_fill_manual(
+    values = c(no = "#E07A5F", yes = "#3D9970")
+  ) +
+  labs(
+    title = "Distribution de l'âge selon la survie",
+    x = "Survie",
+    y = "Âge (années)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Statistiques d'âge par groupe
+
+```{r age-par-groupe}
+aggregate(
+  age ~ survived,
+  data = donnees_age,
+  FUN = function(x) c(
+    effectif = length(x),
+    moyenne = mean(x),
+    mediane = median(x),
+    ecart_type = sd(x)
+  )
+)
+```
+
+## Interprétation
+
+Les boîtes à moustaches permettent de comparer la médiane et la
+dispersion des âges entre survivants et non-survivants.
+Le trait à l'intérieur de chaque boîte représente la médiane ;
+la boîte contient les 50 % centraux des âges.
+
+Les distributions se chevauchent : l'âge seul ne permet donc pas
+de distinguer clairement les survivants des non-survivants.
+Cette analyse porte uniquement sur les passagers dont l'âge est connu.
+Les valeurs manquantes peuvent limiter la représentativité des résultats.
